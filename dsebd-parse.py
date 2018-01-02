@@ -1,36 +1,43 @@
+#!/usr/bin/python3
+
 import requests 
 import re
+import collections
 from bs4 import BeautifulSoup
+    
+def convert_to_html5lib(URL, my_list):
+    """
+    This function will convert .php file to beautiful html5 soup object.
+    Parameter e.g. URL = "http://www.dsebd.org/latest_share_price_alpha.php"
+    """    
+    r = requests.get(URL)
+    # Create a BeautifulSoup object
+    soup = BeautifulSoup(r.content, 'html5lib')
+    soup.prettify()
 
-URL = "http://www.dsebd.org/latest_share_price_alpha.php"
-r = requests.get(URL)
- # Create a BeautifulSoup object
-soup = BeautifulSoup(r.content, 'html5lib')
-soup.prettify()
+    result = soup.find_all("div")[1].get_text()
+    for item in result.split():
+        my_list.append(item)
+    return
 
-try:
-    fh = open("company_list.txt", "w")
-    fh.write(soup.find_all("div")[1].get_text())
-finally:
-    fh.close
-
-latest_share_price_alpha_list = []
-try:
-    with open('company_list.txt', 'r') as file:
-        result = file.read()
-        for data in result.split():
-            latest_share_price_alpha_list.append(data)
-finally:
-    fh.close()
-
-company_list = []
+details_list = []
+convert_to_html5lib("http://www.dsebd.org/latest_share_price_scroll_l.php", details_list)
 counter = 0
-while counter < len(latest_share_price_alpha_list):
+while counter < len(details_list):
     if counter == 0:
-        company_list = latest_share_price_alpha_list[counter]
-        print(latest_share_price_alpha_list[counter])
-    else:
-        company_list = latest_share_price_alpha_list[counter].split("%")
-        print(company_list[1])
-    counter += 3
-
+        company_name = details_list[counter]
+        counter += 1
+    last_trading_price = details_list[counter]
+    counter += 1
+    last_change_price_in_value = details_list[counter]
+    counter += 1
+    if details_list[counter].split("%"):
+        last_change_price_in_percentage = details_list[counter][0]
+        if details_list[counter].split("%")[1]:
+            company_name = details_list[counter].split("%")[1]
+        counter += 1
+        
+    print(company_name)
+    print(last_trading_price)
+    print(last_change_price_in_value)
+    print(last_change_price_in_percentage)
